@@ -11,6 +11,8 @@ from sentinel_schemas import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sentinel_api.services.ai_analysis import generate_security_explanation
+
 MAX_TEXT_LENGTH = 50000
 MAX_URLS = 100
 MAX_HEADERS = 50
@@ -290,6 +292,15 @@ async def analyze_phishing_content(
     if verdict in ("malicious", "suspicious"):
         safe_next_steps.insert(0, "Delete the message immediately")
 
+    ai_explanation = await generate_security_explanation({
+        "verdict": verdict,
+        "confidence": confidence,
+        "category": category,
+        "evidence": evidence,
+        "indicators": indicators,
+        "uncertainty": uncertainty,
+    })
+
     return PhishingAnalysisResult(
         verdict=verdict,
         confidence=confidence,
@@ -298,5 +309,5 @@ async def analyze_phishing_content(
         indicators=indicators,
         uncertainty=uncertainty,
         safe_next_steps=safe_next_steps,
-        ai_explanation=None,
+        ai_explanation=ai_explanation,
     )
